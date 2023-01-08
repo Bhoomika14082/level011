@@ -1,0 +1,20 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "supriya123",
+    "database": "vote-db-dev",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "supriya123",
+    "database": "vote-db-test",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres"
+  }
+}
