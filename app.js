@@ -29,7 +29,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
   session({
-    secret: "my-super-secret-key-3429834092402",
+    secret: "my-super-secret-key-3429834092405",
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
     },
@@ -41,10 +41,8 @@ app.use(function (request, response, next) {
   next();
 });
 
-//initializing passport
 app.use(passport.initialize());
 
-//using passport session
 app.use(passport.session());
 
 //passport session for admin
@@ -75,38 +73,6 @@ passport.use(
   )
 );
 
-// passport session for voter
-passport.use(
-  "voter",
-  new localStrategy(
-    {
-      usernameField: "voterID",
-      passwordField: "password",
-      passReqToCallback: true,
-    },
-    (request, username, password, done) => {
-      Voter.findOne({
-        where: { voterID: username, electionID: request.params.id },
-      })
-        .then(async (voter) => {
-          const result = await bcrypt.compare(password, voter.password);
-          if (result) {
-            return done(null, voter);
-          } else {
-            return done(null, false, { message: "Invalid password" });
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          return done(null, false, {
-            message: "Voter is not registered!!",
-          });
-        });
-    }
-  )
-);
-
-
 //serializing user using passport
 passport.serializeUser((user, done) => {
   done(null, user);
@@ -130,13 +96,12 @@ app.get("/login", (request, response) => {
   response.render("login", { csrf: request.csrfToken() });
 });
 
-// signup page 
+// signup page
 app.get("/signup", (request, response) => {
   response.render("signup", { csrf: request.csrfToken() });
 });
 
-
-//retreive all elections using loggedinId
+//retreive all elections using loggedinIds
 app.get(
   "/election",
   connectEnsureLogin.ensureLoggedIn(),
@@ -150,8 +115,6 @@ app.get(
   }
 );
 
-
-
 // admin home page
 app.get(
   "/home",
@@ -164,19 +127,18 @@ app.get(
       where: { adminID: request.user.id },
     });
 
-    const username=admin.name
+    const username = admin.name;
 
     response.render("adminHome", {
       username: username,
-      ad_id:login_admin_id,
+      ad_id: login_admin_id,
       elections: elections,
       csrf: request.csrfToken(),
     });
   }
 );
 
-
-// election home page
+// election home page (end election)
 app.get(
   "/election/:id",
   connectEnsureLogin.ensureLoggedIn(),
@@ -184,7 +146,7 @@ app.get(
     const login_admin_id = request.user.id;
     const admin = await Admin.findByPk(login_admin_id);
 
-    username=admin.name
+    username = admin.name;
     const elections = await Election.findByPk(request.params.id);
 
     if (login_admin_id !== elections.adminID) {
@@ -200,9 +162,6 @@ app.get(
     const voters = await Voter.findAll({
       where: { electionID: request.params.id },
     });
-
-
-
     response.render("electionHome", {
       election: elections,
       username: username,
@@ -242,7 +201,7 @@ app.delete(
       await question.destroy({ where: { id: Question.id } });
     });
 
-    // delete voters of the election
+    // delete voters of the election(delete election)
     const voters = await Voter.findAll({
       where: { electionID: request.params.id },
     });
@@ -396,8 +355,6 @@ app.post("/users", async (request, response) => {
     return response.redirect("/signup");
   }
 
-  
-
   // check if email already exists
   const admin = await Admin.findOne({ where: { email: request.body.email } });
   if (admin) {
@@ -411,7 +368,7 @@ app.post("/users", async (request, response) => {
     return response.redirect("/signup");
   }
   // hasing the password using bcrypt
-  const hashpwd = await bcrypt.hash(request.body.password, saltRounds); 
+  const hashpwd = await bcrypt.hash(request.body.password, saltRounds);
   try {
     const user = await Admin.create({
       name: request.body.name,
@@ -527,7 +484,6 @@ app.delete(
   }
 );
 
-
 // try to delete an option for the question
 app.delete(
   "/election/:electionID/question/:questionID/option/:id",
@@ -559,7 +515,6 @@ app.delete(
   }
 );
 
-
 // questions home page with all options
 app.get(
   "/election/:id/question/:questiondID",
@@ -590,7 +545,6 @@ app.get(
     });
   }
 );
-
 
 // adding option to the questions asked in election
 app.post(
@@ -653,14 +607,12 @@ app.get(
   "/election/:electionID/question/:questionID/options",
   connectEnsureLogin.ensureLoggedIn(),
   async (request, response) => {
-
     const options = await Option.findAll({
       where: { questionID: request.params.questionID },
     });
     return response.send(options);
   }
 );
-
 
 // trying to get into launching an  election
 app.get(
@@ -791,7 +743,6 @@ app.put(
   }
 );
 
-
 // giving access to edit the question
 app.post(
   "/election/:electionID/question/:questionID/update",
@@ -892,103 +843,6 @@ app.get(
   }
 );
 
-// trying to add an voter
-app.post(
-  "/election/:id/voters/add",
-  connectEnsureLogin.ensureLoggedIn(),
-  async (request, response) => {
-    const adminID = request.user.id;
-    const election = await Election.findByPk(request.params.id);
-
-    if (election.adminID !== adminID) {
-      console.log("You don't have access to edit this election");
-      return response.render("error", {
-        errorMessage: "You are not authorized to view this page",
-      });
-    }
-
-    if (election.ended) {
-      return response.render("error", {
-        errorMessage: "Invalid request, election is ended",
-      });
-    }
-
-    // making validation checks
-    if (request.body.voterID.trim().length === 0) {
-      request.flash("voterError", "Voter ID can't be empty");
-      return response.redirect(`/election/${request.params.id}`);
-    }
-
-    if (request.body.password.length === 0) {
-      request.flash("voterError", "Password can't be empty");
-      return response.redirect(`/election/${request.params.id}`);
-    }
-
-    if (request.body.password.length < 5) {
-      request.flash("voterError", "Password must be of atleast length 5");
-      return response.redirect(`/election/${request.params.id}`);
-    }
-
-    const sameVoter = await Voter.findOne({
-      where: { electionID: request.params.id, voterID: request.body.voterID },
-    });
-    if (sameVoter) {
-      request.flash("voterError", "Voter ID already used");
-      return response.redirect(`/election/${request.params.id}`);
-    }
-
-    try {
-      // hashing the password
-      const hashpwd = await bcrypt.hash(request.body.password, saltRounds);
-
-      await Voter.add(request.body.voterID, hashpwd, request.params.id);
-      response.redirect(`/election/${request.params.id}`);
-    } catch (error) {
-      console.log(error);
-      return response.send(error);
-    }
-  }
-);
-
-// access to delete the voter
-app.post(
-  "/election/:electionID/voter/:voterID/delete",
-  connectEnsureLogin.ensureLoggedIn(),
-  async (request, response) => {
-    const adminID = request.user.id;
-    const election = await Election.findByPk(request.params.electionID);
-
-    if (election.adminID !== adminID) {
-      console.log("You don't have access to edit this election");
-      return response.render("error", {
-        errorMessage: "You are not authorized to view this page",
-      });
-    }
-
-    if (election.ended) {
-      return response.render("error", {
-        errorMessage: "Inavlid request, election is ended",
-      });
-    }
-
-    const voter = await Voter.findByPk(request.params.voterID);
-
-    if (voter.voted) {
-      return response.render("error", {
-        errorMessage: "Invalid request, voter has already voted",
-      });
-    }
-
-    try {
-      await Voter.delete(request.params.voterID);
-      return response.json({ ok: true });
-    } catch (error) {
-      console.log(error);
-      return response.send(error);
-    }
-  }
-);
-
 // changing edit option frontend
 app.get(
   "/election/:electionID/question/:questionID/option/:optionID/edit",
@@ -1045,7 +899,7 @@ app.post(
       });
     }
 
-    // ensure to check validation 
+    // ensure to check validation
     if (request.body.value.trim().length === 0) {
       request.flash("error", "Option can't be empty");
       return response.redirect(
@@ -1086,235 +940,6 @@ app.post(
   }
 );
 
-// trying cast vote frontend
-app.get("/election/:id/vote", async (request, response) => {
-  const election = await Election.findByPk(request.params.id);
-
-  if (election.launched === false) {
-    console.log("Election not launched");
-    return response.render("error", {
-      errorMessage: "Election not launched yet",
-    });
-  }
-
-  // trying to redirect to results page if election is over
-  if (election.ended === true) {
-    console.log("Election ended");
-    return response.redirect(`/election/${request.params.id}/result`);
-  }
-
-  const questions = await question.findAll({
-    where: {
-      electionID: request.params.id,
-    },
-  });
-  const options = [];
-
-  for (let i = 0; i < questions.length; i++) {
-    const allOption = await Option.findAll({
-      where: { questionID: questions[i].id },
-    });
-    options.push(allOption);
-  }
-
-  // the voter logged in
-  if (request.user && request.user.id && request.user.voterID) {
-    const voter = await Voter.findByPk(request.user.id);
-
-    response.render("vote", {
-      election: election,
-      questions: questions,
-      options: options,
-      verified: true,
-      submitted: voter.voted,
-      voter: voter,
-      csrf: request.csrfToken(),
-    });
-  } else {
-    response.render("vote", {
-      election: election,
-      questions: [],
-      options: [],
-      verified: false,
-      submitted: false,
-      csrf: request.csrfToken(),
-    });
-  }
-});
-
-// logining for the  voter
-app.post(
-  "/election/:id/vote",
-  passport.authenticate("voter", {
-    failureRedirect: "back",
-    failureFlash: true,
-  }),
-  function (request, response) {
-    return response.redirect(`/election/${request.params.id}/vote`);
-  }
-);
-
-// submit voter response
-app.post(
-  "/election/:electionID/voter/:id/submit",
-  async (request, response) => {
-    const election = await Election.findByPk(request.params.electionID);
-
-    // validation checks
-    if (election.launched === false) {
-      console.log("Election not launched");
-      return response.render("error", {
-        errorMessage: "Election not launched yet",
-      });
-    }
-
-    if (election.ended === true) {
-      console.log("Election ended");
-      return response.render("error", {
-        errorMessage: "Election has ended",
-      });
-    }
-
-    try {
-      const questions = await question.findAll({
-        where: {
-          electionID: request.params.electionID,
-        },
-      });
-
-      let responses = [];
-
-      for (let i = 0; i < questions.length; i++) {
-        const responseID = Number(request.body[`question-${questions[i].id}`]);
-        responses.push(responseID);
-      }
-
-      // adding responses of voter
-      await Voter.addResponse(request.params.id, responses);
-
-      // marking the voter as voted
-      await Voter.markVoted(request.params.id);
-
-      // rendering thank you message
-      return response.redirect(`/election/${election.id}/vote`);
-    } catch (error) {
-      console.log(error);
-      return response.send(error);
-    }
-  }
-);
-
-// showing election results frontend
-app.get(
-  "/election/:id/result",
-  // connectEnsureLogin.ensureLoggedIn(),
-  async (request, response) => {
-    //  trying to fetch and calculating all results
-    const questions = await question.findAll({
-      where: {
-        electionID: request.params.id,
-      },
-    });
-
-    const voters = await Voter.findAll({
-      where: {
-        electionID: request.params.id,
-      },
-    });
-
-    let votesCast = 0;
-    voters.forEach((voter) => {
-      if (voter.voted) {
-        votesCast++;
-      }
-    });
-
-    const totalVoters = voters.length;
-
-    let optionPercentage = [];
-
-    for (let i = 0; i < questions.length; i++) {
-      // staking pecific question
-      let array = [];
-
-      // making all options of that question
-      const allOption = await Option.findAll({
-        where: { questionID: questions[i].id },
-      });
-
-      allOption.forEach((option) => {
-        // trying to count for specific option
-        let count = 0;
-
-        voters.forEach((voter) => {
-          if (voter.responses.includes(option.id)) {
-            count++;
-          }
-        });
-
-        const percent = (count * 100) / totalVoters;
-
-        // adding the percentage for that specific option of specific question
-        array.push(percent.toFixed(2));
-      });
-
-      optionPercentage.push(array);
-    }
-
-    const options = [];
-
-    for (let i = 0; i < questions.length; i++) {
-      const allOption = await Option.findAll({
-        where: { questionID: questions[i].id },
-      });
-      options.push(allOption);
-    }
-
-    const election = await Election.findByPk(request.params.id);
-
-    //case where if admin logged in and not voter logged in
-    if (request.user && request.user.id && !request.user.voterID) {
-      const adminID = request.user.id;
-      const admin = await Admin.findByPk(adminID);
-
-      if (adminID !== election.adminID && !election.ended) {
-        return response.send("You are not authorized to view this page");
-      }
-
-      response.render("result", {
-        admin: true,
-        username: admin.name,
-        election: election,
-        questions: questions,
-        options: options,
-        data: optionPercentage,
-        votesCast: votesCast,
-        totalVoters: totalVoters,
-      });
-    } else {
-      //case for  not admin and election not ended
-      if (!election.ended) {
-        return response.render("error", {
-          errorMessage: "You are not authorized to view this page",
-        });
-      }
-
-      //try  getting into the admin username
-      const admin = await Admin.findByPk(election.adminID);
-      return response.render("result", {
-        admin: false,
-        username: admin.name,
-        election: election,
-        questions: questions,
-        options: options,
-        data: optionPercentage,
-        votesCast: votesCast,
-        totalVoters: totalVoters,
-      });
-    }
-  }
-);
-
 //  make  admin signout
 app.get("/signout", (request, response) => {
   request.logout((err) => {
@@ -1336,8 +961,5 @@ app.post(
     response.redirect("/home");
   }
 );
-
-
-
 
 module.exports = app;
