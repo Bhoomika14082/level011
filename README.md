@@ -8,3 +8,7 @@
 - Admin can launch elections
 - Users have only access to public url they can only vote using voterId and password
 - At last admin ends the election and checks the results.
+
+# Note:
+- when we signup from login page sometimes it is showing intrnal server error "refresh the page once" and try again after some time its working
+- for signup u can directly sign up from home page it is working perfect
