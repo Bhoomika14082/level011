@@ -2,7 +2,7 @@
 
 <head>
   <title>
-    <%= %>Online Voting Platform
+    <%= %>Online Voting System
   </title>
   <meta name="csrf-token" content="<%= csrf %>" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -45,7 +45,7 @@
       });
     }
 
-    //delete voter
+    //Delete voter
     function deleteVoter(electionID, id) {
       var token = document
         .querySelector('meta[name="csrf-token"]')
@@ -97,7 +97,7 @@
     crossorigin="anonymous"></script>
 </head>
 
-<body style="background-image: linear-gradient(white,#5899E2);">
+<body style="background-image: linear-gradient(rgb(170, 170, 233),#8aadd4);">
   <%- include ('updatedHeader', {username: username}) %>
 
     <div class="flex flex-col justify-center items-center p-4">
@@ -118,31 +118,34 @@
             </div>
             <% } %>
 
-              <div class="flex flex-col md:flex-row justify-between gap-4 pt-4">
+              <div class="flex flex-col md:flex-row justify-between gap-1 pt-1">
                 <div>
                   <div class="flex gap-2">
-                    <p class="text-4xl font-semibold">
-                      <%= election.name %>
+                    <p class="text-4xl flex-col">
+                      <%= election.name %>&nbsp;
                     </p>
                     <% if (!election.launched) { %>
-                      <a class="flex items-center hover:text-blue-600" href="/election/<%= election.id %>/edit"><i
-                          class="fa fa-edit"></i></a>
+                      <a class="flex items-center hover:text-blue-600" href="/election/<%= election.id %>/edit">
+                        <i class="fa fa-edit"></i></a>
                       <% } %>
                   </div>
-                  <p class="text-xl text-gray-500">
+                  <p class="text-xl text-gray-700">
                     <%= questions.length %> Questions
                   </p>
-                  <p class="text-xl text-gray-500">
+                  <p class="text-xl text-gray-700">
                     <%= voters.length %> Voters
                   </p>
                 </div>
                 <div class="flex gap-4 items-center">
                   <% if (!election.ended) { %>
                     <% if (!election.launched) { %>
-                      <div class="flex flex-col md:flex-row gap-4">
+                      <div class="flex flex-col md:flex-row gap-6">
                         <!-- Preview Link -->
-                        <a class="p-1 flex gap-2 items-center rounded-lg bg-green-600 border-2 border-green-800 hover:bg-green-700 text-white font-bold px-4"
-                          href="/election/<%= election.id %>/preview"><i class="fa fa-eye"></i> Preview</a>
+                        &nbsp;&nbsp;<a
+                          class="p-1 flex gap-2 items-center rounded-lg bg-green-600 border-2 border-green-800 hover:bg-green-700 text-white font-bold px-4"
+                          href="/election/<%= election.id %>/preview"><i class="fa fa-eye"></i> Preview
+                        </a>
+
                         <!-- Launch Button -->
                         <a href="/election/<%= election.id %>/launch"
                           class="p-1 flex gap-2 items-center rounded-lg bg-blue-600 border-2 border-blue-800 hover:bg-blue-700 text-white font-bold px-4">
@@ -187,7 +190,7 @@
                       <% } %>
               </div>
 
-
+              <!--Add new question and edit added question-->
               <button class="button button2" onClick="showHideDiv('divMsg1')">Manage Questions</button>
               <br><br>
               <!-- Add new question -->
@@ -200,15 +203,15 @@
                       <input type="hidden" value="<%= csrf %>" name="_csrf">
                       <div class="flex flex-col">
                         <input type="text" name="title" placeholder="Title"
-                          class="border-2 border-black p-2 rounded-lg" />
+                          class="border border-gray-300 p-2 rounded" />
                       </div>
                       <div class="flex flex-col">
                         <input type="text" name="description" placeholder="Description"
-                          class="border-2 border-black p-2 rounded-lg" />
+                          class="border border-gray-300 p-2 rounded" />
                       </div>
                       <div class="flex justify-center items-center">
                         <button type="submit"
-                          class="bg-green-400 transition duration-200 border-2 border-black p-2 rounded-lg hover:bg-green-600 px-6">
+                          class="text-white-900 bg-green-400 transition duration-200 border-2 border-green-600 p-2 rounded-lg hover:bg-green-600 px-6">
                           Add
                         </button>
                       </div>

@@ -1,7 +1,8 @@
+<!--page to add election names-->
 <html>
 
 <head>
-  <title>Online Voting Platform</title>
+  <title>Online Voting System</title>
   <meta name="csrf-token" content="<%= csrf %>" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -41,16 +42,16 @@
 <body>
 
   <% if (elections.length===0) { %>
-    <h1 style="text-align:center;color:black;font-size:large;font-weight:bold;margin-top:2%">No elections created yet
+    <h1 style="text-align:center;color:red;font-size:large;font-weight:bold;margin-top:2%">No Elections created yet
     </h1>
     <% } %>
 
       <table style="font-family: Arial, Helvetica, sans-serif;
-border-collapse: collapse;
-width: 50%;
-margin-left: 25%;
-margin-top: 4%;
-border-color: black;">
+      border-collapse: collapse;
+      width: 50%;
+      margin-left: 25%;
+      margin-top: 4%;
+      border-color: black;">
         <% for (var i=0; i<elections.length; i++) { %>
           <tr style=" border: 2px solid black;">
             <td style=" border: 1px solid black;">
