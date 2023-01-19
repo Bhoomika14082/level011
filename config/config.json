@@ -1,14 +1,14 @@
 {
   "development": {
     "username": "postgres",
-    "password": "supriya123",
+    "password": "Vineeth123",
     "database": "vote-db-dev",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
   "test": {
     "username": "postgres",
-    "password": "supriya123",
+    "password": "Vineeth123",
     "database": "vote-db-test",
     "host": "127.0.0.1",
     "dialect": "postgres"
